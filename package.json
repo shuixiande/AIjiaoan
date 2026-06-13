@@ -1,7 +1,8 @@
-{
+﻿{
   "name": "ai-jiaoxue-sheji",
   "version": "2.0.0",
-  "description": "AI 教学设计生成器",
+  "description": "AI 教案生成器",
+  "type": "module",
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js"
