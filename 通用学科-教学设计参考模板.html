@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>{课程名称} - {课题名称} 教学设计</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "宋体", SimSun, serif; font-size: 12pt; line-height: 1.5; }
+    .doc-container { width: 720px; margin: 0 auto; padding: 15px; }
+    .title { text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 8px; }
+    table { width: 720px; border-collapse: collapse; table-layout: fixed; }
+    td, th { border: 1px solid #000; padding: 4px 6px; font-size: 12pt; vertical-align: top; word-wrap: break-word; }
+    .label-cell { width: 90px; font-weight: bold; text-align: center; background-color: #f5f5f5; }
+    .section-title { text-align: center; font-weight: bold; background-color: #f5f5f5; }
+    .input-cell { min-height: 35px; }
+    .activity-cell { width: 150px; }
+    .teaching-row td { vertical-align: top; padding: 6px; }
+    b, strong { font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="doc-container">
+    <div class="title">《{课程名称}》教学设计</div>
+    <table>
+        <tr>
+            <td class="label-cell">授课时间</td>
+            <td colspan="2">____ 年 __ 月 __ 日    第 __ 周    星期 __    第 __ 节</td>
+            <td class="label-cell">课时</td>
+            <td colspan="2">__ 课时</td>
+        </tr>
+        <tr>
+            <td class="label-cell">课题名称</td>
+            <td colspan="2">{课题名称}</td>
+            <td class="label-cell">课型</td>
+            <td colspan="2">{新授课/复习课/实训课/考核课}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">授课班级</td>
+            <td colspan="2">{授课班级}</td>
+            <td class="label-cell">授课教师</td>
+            <td colspan="2">{授课教师}</td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教学目标</td>
+        </tr>
+        <tr>
+            <td class="label-cell">{维度一名称}</td>
+            <td colspan="5" class="input-cell">
+                1. {知识点目标1}<br>
+                2. {知识点目标2}<br>
+                3. {核心概念或公式}<strong>{加粗内容}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">{维度二名称}</td>
+            <td colspan="5" class="input-cell">
+                1. 通过{活动/方法}，培养{能力}。<br>
+                2. 通过{活动/方法}，提高{能力}。
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">{维度三名称}</td>
+            <td colspan="5" class="input-cell">
+                1. {情感目标1}。<br>
+                2. {情感目标2}。
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教学重点</td>
+        </tr>
+        <tr>
+            <td class="label-cell">教学重点</td>
+            <td colspan="5" class="input-cell">
+                1. {重点1}<br>
+                2. {重点2}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教学难点</td>
+        </tr>
+        <tr>
+            <td class="label-cell">教学难点</td>
+            <td colspan="5" class="input-cell">
+                1. {难点1}<br>
+                2. {难点2}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教法与学法</td>
+        </tr>
+        <tr>
+            <td class="label-cell">教法</td>
+            <td colspan="5" class="input-cell">
+                1. {教法1}<br>
+                2. {教法2}<br>
+                3. {教法3}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">学法</td>
+            <td colspan="5" class="input-cell">
+                1. {学法1}<br>
+                2. {学法2}
+            </td>
+        </tr>
+        <!-- ====== 可选模块开始 ====== -->
+        <!-- 以下模块根据教案配置决定是否启用 -->
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">{模块A名称：如课程思政/德育渗透/核心素养}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">{模块A名称}</td>
+            <td colspan="5" class="input-cell">
+                1. {融入点1}<br>
+                2. {融入点2}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">{模块B名称：如安全教育/实验规范/学科特色}</td>
+        </tr>
+        <tr>
+            <td class="label-cell">{模块B名称}</td>
+            <td colspan="5" class="input-cell">
+                1. {要点1}<br>
+                2. {要点2}
+            </td>
+        </tr>
+        <!-- ====== 可选模块结束 ====== -->
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教学准备</td>
+        </tr>
+        <tr>
+            <td class="label-cell">教学准备</td>
+            <td colspan="5" class="input-cell">
+                <strong>教师</strong>：{多媒体课件、教具、实验器材等}<br>
+                <strong>学生</strong>：{预习要求、复习内容等}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">板书设计</td>
+        </tr>
+        <tr>
+            <td class="label-cell">板书设计</td>
+            <td colspan="5" class="input-cell" style="font-family: '宋体', SimSun, serif; white-space: pre-line; line-height: 1.8;">
+                {章节标题}
+                ─────────────────────
+                一、{大标题}
+                1. {知识点}
+                2. <strong>{核心公式/概念}</strong>
+
+                二、{大标题}
+                1. {知识点}
+                2. {知识点}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教 学 实 施</td>
+        </tr>
+        <tr>
+            <td class="label-cell" style="width:90px;font-weight:bold;text-align:center;background-color:#f5f5f5;">教学环节</td>
+            <td class="label-cell" colspan="2" style="font-weight:bold;text-align:center;background-color:#f5f5f5;">教学内容</td>
+            <td class="label-cell activity-cell" style="font-weight:bold;text-align:center;background-color:#f5f5f5;">教师活动</td>
+            <td class="label-cell activity-cell" style="font-weight:bold;text-align:center;background-color:#f5f5f5;">学生活动</td>
+            <td class="label-cell activity-cell" style="font-weight:bold;text-align:center;background-color:#f5f5f5;">设计意图</td>
+        </tr>
+        <tr class="teaching-row">
+            <td style="font-weight:bold;">一、{环节名称}<br>（{时间}分钟）</td>
+            <td colspan="2">
+                {教学内容详细描述}<br>
+                <strong>{核心内容加粗}</strong>
+            </td>
+            <td>
+                {教师活动描述}
+            </td>
+            <td>
+                {学生活动描述}
+            </td>
+            <td>
+                {设计意图描述}
+            </td>
+        </tr>
+        <tr class="teaching-row">
+            <td style="font-weight:bold;">二、{环节名称}<br>（{时间}分钟）</td>
+            <td colspan="2">
+                {教学内容}<br>
+                <strong>{核心公式/概念}</strong>
+            </td>
+            <td>
+                {教师活动}
+            </td>
+            <td>
+                {学生活动}
+            </td>
+            <td>
+                {设计意图}
+            </td>
+        </tr>
+        <!-- 继续添加更多环节行（建议5-7个环节） -->
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">课堂小结</td>
+        </tr>
+        <tr>
+            <td class="label-cell">课堂小结</td>
+            <td colspan="5" class="input-cell">
+                本节课学习了以下核心知识：<br>
+                1. <strong>{核心知识点1}</strong><br>
+                2. <strong>{核心知识点2}</strong><br>
+                3. <strong>{核心知识点3}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">作业设计</td>
+        </tr>
+        <tr>
+            <td class="label-cell">作业设计</td>
+            <td colspan="5" class="input-cell">
+                <strong>1. 基础巩固</strong><br>
+                · {基础作业内容}<br><br>
+                <strong>2. 拓展提高</strong><br>
+                · {拓展作业内容}<br><br>
+                <strong>3. 思考探究</strong><br>
+                · {思考题}
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell section-title" colspan="6" style="text-align:center;font-weight:bold;background-color:#f5f5f5;">教学反思</td>
+        </tr>
+        <tr>
+            <td class="label-cell">教学反思</td>
+            <td colspan="5" class="input-cell">
+                <strong>预设问题及预案：</strong><br>
+                1. {可能遇到的问题及处理方案}<br>
+                2. {可能遇到的问题及处理方案}<br><br>
+                <strong>亮点设计：</strong><br>
+                · {教学设计的创新和特色}
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "ai-jiaoxue-sheji",
+  "version": "2.0.0",
+  "description": "AI 教学设计生成器",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

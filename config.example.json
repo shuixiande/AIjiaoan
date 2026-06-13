@@ -1,0 +1,7 @@
+﻿{
+  "apiEndpoint": "https://api.deepseek.com/v1/chat/completions",
+  "apiKey": "sk-your-api-key-here",
+  "model": "deepseek-chat",
+  "pricePerUse": 2.99,
+  "defaultFreeCount": 1
+}

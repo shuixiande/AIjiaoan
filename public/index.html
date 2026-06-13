@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 教学设计自助生成器</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+.app { max-width: 960px; margin: 0 auto; padding: 20px; }
+
+.header { text-align: center; padding: 28px 0 20px; }
+.header h1 { font-size: 28px; color: #1a73e8; letter-spacing: 1px; }
+.header p { color: #666; margin-top: 6px; font-size: 14px; }
+
+/* 状态栏 */
+.status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #fff; border-radius: 10px; padding: 12px 20px; margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 10px;
+}
+.status-left { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.badge {
+    font-size: 13px; padding: 5px 14px; border-radius: 20px; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+}
+.badge.free { background: #e8f5e9; color: #2e7d32; }
+.badge.paid { background: #fff3e0; color: #e65100; }
+.badge.empty { background: #ffebee; color: #c62828; }
+.badge .count { font-size: 16px; font-weight: 700; margin: 0 2px; }
+
+/* 卡片 */
+.card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+.form-row { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 180px; }
+.form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 12px; border: 1px solid #d0d5dd; border-radius: 6px;
+    font-size: 14px; outline: none; transition: border-color 0.2s; background: #fff;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+}
+.form-group textarea { min-height: 80px; resize: vertical; }
+
+/* API 来源选择 */
+.api-source {
+    display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.source-option {
+    flex: 1; min-width: 200px; padding: 14px 16px; border: 2px solid #e0e0e0;
+    border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.2s;
+}
+.source-option:hover { border-color: #1a73e8; }
+.source-option.selected { border-color: #1a73e8; background: #f0f6ff; }
+.source-option .source-title { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 4px; }
+.source-option .source-desc { font-size: 12px; color: #888; }
+.source-option .source-tag {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-top: 6px;
+}
+.source-option .tag-free { background: #e8f5e9; color: #2e7d32; }
+.source-option .tag-paid { background: #fff3e0; color: #e65100; }
+
+.toggle-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.toggle { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
+.toggle input { display: none; }
+.toggle-slider { position: absolute; inset: 0; background: #ccc; border-radius: 22px; transition: 0.25s; }
+.toggle-slider::before {
+    content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px;
+    background: #fff; border-radius: 50%; transition: 0.25s;
+}
+.toggle input:checked + .toggle-slider { background: #1a73e8; }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle-label { font-size: 14px; }
+.toggle-label small { color: #999; font-size: 12px; }
+
+.collapse-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+.collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.collapse-body.open { max-height: 600px; }
+.arrow { transition: transform 0.3s; font-size: 12px; color: #999; }
+.arrow.open { transform: rotate(90deg); }
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 28px; border-radius: 8px; font-size: 15px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: #1a73e8; color: #fff; }
+.btn-primary:hover { background: #1557b0; }
+.btn-primary:disabled { background: #94b8e8; cursor: not-allowed; }
+.btn-success { background: #0f973d; color: #fff; }
+.btn-success:hover { background: #0c7e32; }
+.btn-success:disabled { background: #a0d8b8; cursor: not-allowed; opacity: 0.7; }
+.btn-warning { background: #f0ad4e; color: #333; }
+.btn-warning:hover { background: #ec971f; }
+.btn-outline { background: transparent; color: #555; border: 1px solid #d0d5dd; }
+.btn-outline:hover { background: #f5f5f5; }
+.btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+
+.center { text-align: center; }
+
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.preview-wrap { border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; background: #fff; }
+.preview-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 14px; background: #f8f9fb; border-bottom: 1px solid #d0d5dd;
+    font-size: 13px; color: #666; flex-wrap: wrap; gap: 8px;
+}
+.preview-bar .file-name { font-weight: 500; color: #333; }
+.preview-frame { width: 100%; min-height: 500px; border: none; }
+
+/* Toast */
+.toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    padding: 12px 24px; border-radius: 8px; color: #fff; font-size: 14px; line-height: 1.6;
+    z-index: 9999; opacity: 0; transition: opacity 0.3s, top 0.3s; pointer-events: none; max-width: 90vw;
+}
+.toast.show { opacity: 1; top: 30px; }
+.toast.success { background: #0f973d; }
+.toast.error { background: #c0392b; }
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998;
+    justify-content: center; align-items: center; padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+    background: #fff; border-radius: 14px; padding: 32px; max-width: 520px; width: 100%;
+    max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+.modal h2 { font-size: 20px; margin-bottom: 6px; color: #1a73e8; }
+.modal p { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 8px; }
+
+/* 付费弹窗 */
+.pay-header { text-align: center; }
+.pay-header .price { font-size: 32px; color: #e65100; font-weight: 700; margin: 10px 0; }
+.pay-header .price small { font-size: 14px; color: #999; font-weight: 400; }
+.pay-qr {
+    background: #f9f9f9; padding: 20px; border-radius: 12px; margin: 16px 0; text-align: center;
+}
+.pay-qr .qr-label { font-size: 14px; color: #666; margin-bottom: 12px; font-weight: 500; }
+.pay-qr .qr-code { width: 200px; height: 200px; object-fit: contain; border-radius: 8px; border: 1px solid #e0e0e0; }
+.pay-qr .qr-fallback {
+    width: 200px; height: 200px; background: #eee; margin: 0 auto; border-radius: 8px;
+    display: none; align-items: center; justify-content: center; color: #999; font-size: 13px;
+}
+.pay-step { font-size: 13px; color: #666; text-align: center; margin-top: 12px; line-height: 1.8; }
+.pay-step span { display: inline-block; background: #1a73e8; color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; line-height: 20px; margin-right: 4px; }
+
+.tag { display: inline-block; background: #e8f0fe; color: #1a73e8; font-size: 11px; padding: 1px 8px; border-radius: 10px; font-weight: 500; }
+
+@media (max-width: 600px) {
+    .app { padding: 12px; }
+    .card { padding: 16px; }
+    .form-row { gap: 10px; }
+    .form-group { min-width: 100%; }
+    .header h1 { font-size: 22px; }
+    .btn { width: 100%; }
+    .btn-group { flex-direction: column; }
+    .modal { padding: 20px; }
+    .status-bar { flex-direction: column; text-align: center; }
+    .source-option { min-width: 100%; }
+}
+
+.preview-frame::-webkit-scrollbar { width: 6px; }
+.preview-frame::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+    <div class="header">
+        <h1>📝 AI 教学设计自助生成器</h1>
+        <p>填写课题信息 → 一键生成标准教学设计 → 下载/打印</p>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-left">
+            <span style="font-size:13px;color:#666;">使用方式：</span>
+            <span id="modeBadge" class="badge" style="background:#e8f0fe;color:#1a73e8;">系统 API</span>
+            <span id="freeBadge" class="badge free">🎁 免费 <span class="count">1</span> 次</span>
+            <span id="paidBadge" class="badge paid" style="display:none;">💎 付费 <span class="count">0</span> 次</span>
+        </div>
+        <button class="btn btn-warning" style="font-size:13px;padding:6px 16px;" id="payBtn" onclick="showPayModal()" title="购买使用次数">
+            💰 充值（￥<span id="priceTag">2.99</span>/次）
+        </button>
+    </div>
+
+    <!-- 第一步：选择 API 来源 -->
+    <div class="card">
+        <div class="card-title"><span>🔑</span> 选择 API 来源</div>
+        <div class="api-source">
+            <div class="source-option selected" id="sourceSys" onclick="switchSource('system')">
+                <div class="source-title">🏫 使用系统 API</div>
+                <div class="source-desc">免配置，即开即用</div>
+                <span class="source-tag tag-free" id="sysTagFree">🎁 免费 1 次</span>
+                <span class="source-tag tag-paid" id="sysTagPaid" style="display:none;">💰 ￥2.99/次</span>
+            </div>
+            <div class="source-option" id="sourceOwn" onclick="switchSource('own')">
+                <div class="source-title">🔧 使用自己的 API Key</div>
+                <div class="source-desc">DeepSeek / 通义千问 / Groq ···</div>
+                <span class="source-tag tag-free">♾️ 不限次数</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 设置（自有 Key 模式显示） -->
+    <div class="card" id="apiCard" style="display:none;">
+        <div class="collapse-header" onclick="toggleCollapse(this)">
+            <div class="card-title"><span>⚙️</span> 自有 API 设置 <span class="tag">必填</span></div>
+            <span class="arrow" id="apiArrow">▶</span>
+        </div>
+        <div class="collapse-body" id="apiBody">
+            <div class="form-row">
+                <div class="form-group" style="flex:1.5;">
+                    <label>API 地址</label>
+                    <input type="url" id="apiEndpoint" value="https://api.deepseek.com" placeholder="https://api.deepseek.com">
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>API Key <span class="tag">必填</span></label>
+                    <input type="password" id="apiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>模型名称</label>
+                    <input type="text" id="apiModel" value="deepseek-chat" placeholder="deepseek-chat">
+                </div>
+            </div>
+            <div style="font-size:12px;color:#999;">
+                支持 OpenAI 兼容接口：DeepSeek / 通义千问 / 硅基流动 / Groq 等<br>
+                新手推荐 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#1a73e8;">DeepSeek</a>
+                （注册即送额度，无需绑定手机）
+            </div>
+        </div>
+    </div>
+
+    <!-- 教案信息 -->
+    <div class="card">
+        <div class="card-title"><span>📋</span> 教案信息</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>课程名称 <span class="tag">必填</span></label>
+                <input type="text" id="courseName" placeholder="如：初中化学 / 高中数学 / 小学语文">
+            </div>
+            <div class="form-group">
+                <label>课题名称 <span class="tag">必填</span></label>
+                <input type="text" id="topicName" placeholder="如：制取氧气 / 二次函数的图像与性质">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex:0.8;">
+                <label>课型</label>
+                <select id="lessonType">
+                    <option value="新授课">新授课</option>
+                    <option value="复习课">复习课</option>
+                    <option value="实训课">实训课</option>
+                    <option value="考核课">考核课</option>
+                    <option value="讲评课">讲评课</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0.6;">
+                <label>课时</label>
+                <select id="lessonHours">
+                    <option value="1">1 课时</option>
+                    <option value="2" selected>2 课时</option>
+                    <option value="3">3 课时</option>
+                    <option value="4">4 课时</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>授课班级</label>
+                <input type="text" id="className" placeholder="如：九年级（1）班">
+            </div>
+            <div class="form-group">
+                <label>授课教师</label>
+                <input type="text" id="teacherName" placeholder="可留空">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex:0.6;">
+                <label>授课日期</label>
+                <input type="date" id="teachDate">
+            </div>
+            <div class="form-group" style="flex:1.5;">
+                <label>教学目标维度</label>
+                <select id="objectiveType">
+                    <option value="default">知识与技能 / 过程与方法 / 情感态度与价值观</option>
+                    <option value="core">核心素养（语言建构 / 思维发展 / 审美鉴赏 / 文化传承）</option>
+                    <option value="custom">自定义维度</option>
+                </select>
+            </div>
+            <div class="form-group" id="customDimGroup" style="display:none;flex:1;">
+                <label>自定义维度（每行一个）</label>
+                <textarea id="customDims" placeholder="如：知识理解&#10;能力发展&#10;价值观念"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 可选模块 -->
+    <div class="card">
+        <div class="card-title"><span>🧩</span> 可选模块</div>
+
+        <div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" id="moduleA" checked><span class="toggle-slider"></span></label>
+            <span class="toggle-label">模块 A</span>
+            <input type="text" id="moduleAName" value="课程思政" style="width:120px;padding:4px 8px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;">
+            <small style="color:#999;">（课程思政 / 德育渗透 / 核心素养）</small>
+        </div>
+
+        <div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" id="moduleB" checked><span class="toggle-slider"></span></label>
+            <span class="toggle-label">模块 B</span>
+            <input type="text" id="moduleBName" value="安全教育" style="width:120px;padding:4px 8px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;">
+            <small style="color:#999;">（安全教育 / 实验规范 / 学科特色）</small>
+        </div>
+
+        <div class="form-row" style="margin-top:10px;">
+            <div class="form-group">
+                <label>额外生成要求（可选）</label>
+                <textarea id="extraReq" placeholder="如：需要融入 AI 技术应用案例 / 侧重培养创新思维 / 包含分组讨论环节 …" style="min-height:50px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成按钮 -->
+    <div class="card center">
+        <button class="btn btn-primary" id="genBtn" onclick="generate()">
+            <span id="genBtnIcon">✨</span>
+            <span id="genBtnText">生成教学设计</span>
+        </button>
+        <p style="font-size:12px;color:#999;margin-top:8px;" id="genHint">
+            使用系统 API：<strong>首次免费</strong>，之后 ￥2.99/次
+        </p>
+    </div>
+
+    <!-- 预览与下载 -->
+    <div class="card" id="previewCard" style="display:none;">
+        <div class="card-title"><span>📄</span> 生成结果</div>
+        <div class="preview-wrap">
+            <div class="preview-bar">
+                <span class="file-name" id="fileName">教学设计.html</span>
+                <div class="btn-group" style="margin:0;">
+                    <button class="btn btn-outline" style="padding:6px 16px;font-size:13px;" onclick="copyToClipboard()">📋 复制</button>
+                    <button class="btn btn-success" style="padding:6px 16px;font-size:13px;" onclick="downloadHtml()">💾 下载 HTML</button>
+                    <button class="btn btn-outline" style="padding:6px 16px;font-size:13px;" onclick="printPreview()">🖨️ 打印</button>
+                </div>
+            </div>
+            <iframe class="preview-frame" id="previewFrame" srcdoc=""></iframe>
+        </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 10px;font-size:12px;color:#999;">
+        基于通用学科教案模板 · 下载后将 .html 改为 .doc 即可用 Word 打开编辑
+    </div>
+</div>
+
+<!-- 付费弹窗 -->
+<div class="modal-overlay" id="payModal">
+    <div class="modal pay-header">
+        <h2>💰 付费使用系统 API</h2>
+        <p style="color:#888;font-size:13px;">免费次数已用完，请扫码支付后点击下方按钮</p>
+
+        <div class="price">￥<span id="modalPrice">2.99</span> <small>/ 次</small></div>
+
+        <div class="pay-qr">
+            <div class="qr-label">📱 微信扫码支付</div>
+            <img src="images/qrcode.jpg" alt="微信收款码" class="qr-code"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="qr-fallback">收款码加载失败，请直接扫码转账</div>
+        </div>
+
+        <div class="pay-step">
+            <span>1</span> 打开微信扫一扫 <br>
+            <span>2</span> 支付 <strong>￥<span id="stepPrice">2.99</span></strong> <br>
+            <span>3</span> 支付完成后，点击下方按钮
+        </div>
+
+        <div style="margin-top:20px;">
+            <button class="btn btn-success" style="width:100%;padding:14px;" id="btnPayConfirm" onclick="confirmPayment()">
+                ✅ 我已完成付款
+            </button>
+        </div>
+        <div style="text-align:center;margin-top:10px;">
+            <button class="btn btn-outline" style="font-size:13px;padding:6px 20px;" onclick="closePayModal()">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ 全局状态 ============
+// 前端仅保存 UI 状态，所有业务逻辑在后端
+let API_SOURCE = 'system';
+let USER_ID = '';
+let USER_SIG = '';  // userId 签名，用于防止伪造
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', async () => {
+    // 获取或生成用户 ID
+    USER_ID = localStorage.getItem('userId');
+    USER_SIG = localStorage.getItem('userSig');
+    if (!USER_ID) {
+        USER_ID = 'u_' + Array.from(crypto.getRandomValues(new Uint8Array(12)))
+            .map(b => b.toString(16).padStart(2,'0')).join('');
+        localStorage.setItem('userId', USER_ID);
+        USER_SIG = '';  // 新用户，等待后端返回签名
+    }
+
+    // 加载本地 UI 偏好设置
+    loadSettings();
+
+    // 设置默认日期
+    if (!document.getElementById('teachDate').value) {
+        const d = new Date(); d.setDate(d.getDate() + 1);
+        document.getElementById('teachDate').value = d.toISOString().slice(0,10);
+    }
+
+    // 教学目标维度切换
+    document.getElementById('objectiveType').addEventListener('change', function() {
+        document.getElementById('customDimGroup').style.display = this.value === 'custom' ? 'block' : 'none';
+    });
+
+    // 从后端加载用户状态
+    await refreshStatus();
+});
+
+// ============ 切换 API 来源 ============
+function switchSource(mode) {
+    API_SOURCE = mode;
+    localStorage.setItem('apiSource', mode);
+
+    document.querySelectorAll('.source-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(mode === 'system' ? 'sourceSys' : 'sourceOwn').classList.add('selected');
+
+    document.getElementById('apiCard').style.display = mode === 'own' ? 'block' : 'none';
+    if (mode === 'own') {
+        document.getElementById('apiBody').classList.add('open');
+        document.getElementById('apiArrow').classList.add('open');
+    }
+
+    document.getElementById('modeBadge').textContent = mode === 'system' ? '系统 API' : '自有 API';
+    document.getElementById('modeBadge').style.cssText = mode === 'system'
+        ? 'background:#e8f0fe;color:#1a73e8;'
+        : 'background:#f3e5f5;color:#7b1fa2;';
+
+    updateGenerateUI();
+}
+
+function updateGenerateUI() {
+    if (API_SOURCE === 'system') {
+        document.getElementById('genHint').innerHTML = '使用系统 API：<strong>首次免费</strong>，之后 ￥2.99/次';
+        document.getElementById('payBtn').style.display = 'inline-flex';
+    } else {
+        document.getElementById('genHint').innerHTML = '使用自有 API Key，<strong>不限使用次数</strong>';
+        document.getElementById('payBtn').style.display = 'none';
+    }
+}
+
+// ============ 加载/保存 UI 偏好设置 ============
+function loadSettings() {
+    const fields = ['apiEndpoint','apiKey','apiModel','courseName','topicName','lessonType','lessonHours',
+                    'className','teacherName','teachDate','objectiveType','moduleAName','moduleBName','extraReq'];
+    fields.forEach(id => {
+        const val = localStorage.getItem(id);
+        if (val) document.getElementById(id).value = val;
+    });
+    ['moduleA','moduleB'].forEach(id => {
+        const val = localStorage.getItem(id);
+        if (val !== null) document.getElementById(id).checked = val === 'true';
+    });
+
+    const savedSource = localStorage.getItem('apiSource') || 'system';
+    switchSource(savedSource);
+}
+
+function saveSettings() {
+    const fields = ['apiEndpoint','apiKey','apiModel','courseName','topicName','lessonType','lessonHours',
+                    'className','teacherName','teachDate','objectiveType','moduleAName','moduleBName','extraReq'];
+    fields.forEach(id => {
+        const val = document.getElementById(id).value;
+        if (val) localStorage.setItem(id, val);
+    });
+    ['moduleA','moduleB'].forEach(id => localStorage.setItem(id, document.getElementById(id).checked));
+    localStorage.setItem('apiSource', API_SOURCE);
+}
+
+// ============ 刷新状态（调用后端 API） ============
+async function refreshStatus() {
+    try {
+        const res = await fetch('/api/status', {
+            headers: {
+                'X-User-Id': USER_ID,
+                'X-User-Sig': USER_SIG
+            }
+        });
+        if (!res.ok) throw new Error('status fetch failed');
+        const data = await res.json();
+
+        // 保存服务端返回的签名
+        if (data.userSig) {
+            USER_SIG = data.userSig;
+            localStorage.setItem('userSig', USER_SIG);
+        }
+
+        const price = data.pricePerUse || 2.99;
+        document.getElementById('priceTag').textContent = price.toFixed(2);
+        document.getElementById('modalPrice').textContent = price.toFixed(2);
+        document.getElementById('stepPrice').textContent = price.toFixed(2);
+
+        const freeCount = data.freeCount || 0;
+        const freeBadge = document.getElementById('freeBadge');
+        const paidBadge = document.getElementById('paidBadge');
+        const sysTagFree = document.getElementById('sysTagFree');
+        const sysTagPaid = document.getElementById('sysTagPaid');
+
+        if (freeCount > 0) {
+            freeBadge.className = 'badge free';
+            freeBadge.querySelector('.count').textContent = freeCount;
+            freeBadge.style.display = '';
+            sysTagFree.style.display = '';
+            sysTagPaid.style.display = 'none';
+        } else {
+            freeBadge.className = 'badge empty';
+            freeBadge.querySelector('.count').textContent = '0';
+            freeBadge.style.display = '';
+            sysTagFree.style.display = 'none';
+            sysTagPaid.style.display = '';
+        }
+
+        if (data.paidCount > 0) {
+            paidBadge.querySelector('.count').textContent = data.paidCount;
+            paidBadge.style.display = '';
+        } else {
+            paidBadge.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('获取状态失败:', e);
+    }
+}
+
+// ============ Collapse ============
+function toggleCollapse(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.arrow');
+    body.classList.toggle('open');
+    arrow.classList.toggle('open');
+}
+
+// ============ Toast ============
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.innerHTML = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ============ 付费弹窗 ============
+let payCountdownInterval = null;
+let payCountdownSeconds = 0;
+let payCountdownDone = false;
+
+function resetPayBtn() {
+    if (payCountdownInterval) {
+        clearInterval(payCountdownInterval);
+        payCountdownInterval = null;
+    }
+    payCountdownSeconds = 0;
+    payCountdownDone = false;
+    const btn = document.getElementById('btnPayConfirm');
+    btn.disabled = false;
+    btn.textContent = '✅ 我已完成付款';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+}
+
+async function showPayModal() {
+    document.getElementById('payModal').classList.add('show');
+
+    // 获取支付 token
+    try {
+        const res = await fetch('/api/confirm-payment/token', {
+            headers: {
+                'X-User-Id': USER_ID,
+                'X-User-Sig': USER_SIG
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            PAYMENT_TOKEN = data.token;
+        }
+    } catch (e) {
+        console.error('获取支付 token 失败:', e);
+    }
+
+    const btn = document.getElementById('btnPayConfirm');
+    payCountdownDone = false;
+    payCountdownSeconds = 15;
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = payCountdownSeconds + '秒后可点击';
+
+    payCountdownInterval = setInterval(() => {
+        payCountdownSeconds--;
+        if (payCountdownSeconds <= 0) {
+            clearInterval(payCountdownInterval);
+            payCountdownInterval = null;
+            payCountdownDone = true;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.textContent = '✅ 我已完成付款';
+        } else {
+            btn.textContent = payCountdownSeconds + '秒后可点击';
+        }
+    }, 1000);
+}
+
+function closePayModal() {
+    document.getElementById('payModal').classList.remove('show');
+    resetPayBtn();
+}
+
+let PAYMENT_TOKEN = '';
+
+async function confirmPayment() {
+    if (!payCountdownDone) return;
+
+    closePayModal();
+    showToast('⏳ 正在确认付款...', 'success');
+
+    try {
+        const res = await fetch('/api/confirm-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': USER_ID,
+                'X-User-Sig': USER_SIG
+            },
+            body: JSON.stringify({ token: PAYMENT_TOKEN })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('✅ 付款成功！已获得 1 次使用权限，现在可以生成教案了', 'success');
+            await refreshStatus();
+        } else {
+            showToast('❌ ' + (data.message || '确认失败，请重试'), 'error');
+        }
+    } catch (e) {
+        showToast('❌ 网络错误，无法确认付款', 'error');
+    }
+}
+
+// ============ 收集表单数据 ============
+function collectFormData() {
+    return {
+        courseName: document.getElementById('courseName').value.trim(),
+        topicName: document.getElementById('topicName').value.trim(),
+        lessonType: document.getElementById('lessonType').value,
+        lessonHours: document.getElementById('lessonHours').value,
+        className: document.getElementById('className').value.trim(),
+        teacherName: document.getElementById('teacherName').value.trim(),
+        teachDate: document.getElementById('teachDate').value,
+        objectiveType: document.getElementById('objectiveType').value,
+        customDims: document.getElementById('customDims').value.trim(),
+        moduleA: document.getElementById('moduleA').checked,
+        moduleAName: document.getElementById('moduleAName').value.trim(),
+        moduleB: document.getElementById('moduleB').checked,
+        moduleBName: document.getElementById('moduleBName').value.trim(),
+        extraReq: document.getElementById('extraReq').value.trim()
+    };
+}
+
+function collectOwnApiConfig() {
+    return {
+        apiEndpoint: document.getElementById('apiEndpoint').value.trim(),
+        apiKey: document.getElementById('apiKey').value.trim(),
+        apiModel: document.getElementById('apiModel').value.trim()
+    };
+}
+
+// ============ 生成教案（核心：只调后端 API） ============
+async function generate() {
+    const btn = document.getElementById('genBtn');
+    const icon = document.getElementById('genBtnIcon');
+    const text = document.getElementById('genBtnText');
+
+    // 前端基础校验（提升 UX，后端也有完整验证）
+    if (!document.getElementById('topicName').value.trim()) {
+        showToast('请填写课题名称', 'error');
+        return;
+    }
+    if (!document.getElementById('courseName').value.trim()) {
+        showToast('请填写课程名称', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spinner"></span>';
+    text.textContent = 'AI 正在备课中（约30~60秒）...';
+    saveSettings();
+
+    try {
+        // 构建请求体 —— 全部业务逻辑由后端处理
+        const requestBody = {
+            apiSource: API_SOURCE,
+            formData: collectFormData()
+        };
+
+        if (API_SOURCE === 'own') {
+            requestBody.ownApiConfig = collectOwnApiConfig();
+        }
+
+        const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': USER_ID,
+                'X-User-Sig': USER_SIG
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await res.json();
+
+        // 处理后端验证错误
+        if (!res.ok) {
+            if (data.error === 'no_quota') {
+                showPayModal();
+                return;
+            }
+            if (data.error === 'validation_failed' && data.errors) {
+                showToast('❌ ' + data.errors.join('；'), 'error');
+                return;
+            }
+            if (data.error === 'system_config') {
+                showToast('❌ 服务器尚未配置系统 API Key，请联系管理员', 'error');
+                return;
+            }
+            if (data.error === 'api_key_invalid') {
+                showToast('❌ API Key 无效，请检查是否填写正确', 'error');
+                return;
+            }
+            if (data.error === 'rate_limited') {
+                showToast('❌ API 调用过于频繁，请稍后重试', 'error');
+                return;
+            }
+            if (data.error === 'insufficient_balance') {
+                showToast('❌ API 余额不足，请充值', 'error');
+                return;
+            }
+            showToast('❌ ' + (data.message || '生成失败'), 'error');
+            return;
+        }
+
+        // 成功 — 直接使用后端返回的清理后 HTML
+        document.getElementById('previewFrame').srcdoc = data.html;
+        document.getElementById('previewCard').style.display = 'block';
+        document.getElementById('fileName').textContent = data.fileName || '教学设计.html';
+
+        showToast('✅ 教学设计生成成功！<br>点击「下载HTML」保存或用Word打开编辑', 'success');
+        document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // 更新剩余次数
+        await refreshStatus();
+
+    } catch (e) {
+        showToast('❌ 网络错误，无法连接服务器', 'error');
+    } finally {
+        btn.disabled = false;
+        icon.innerHTML = '✨';
+        text.textContent = '生成教学设计';
+    }
+}
+
+// ============ 下载/复制/打印 ============
+function downloadHtml() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    const name = document.getElementById('fileName').textContent || '教学设计.html';
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✅ 下载成功！可改名 .doc 用 Word 打开', 'success');
+}
+
+function copyToClipboard() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    navigator.clipboard.writeText(html).then(
+        () => showToast('✅ 已复制 HTML 源代码到剪贴板', 'success'),
+        () => {
+            const ta = document.createElement('textarea');
+            ta.value = html; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            showToast('✅ 已复制到剪贴板', 'success');
+        }
+    );
+}
+
+function printPreview() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+}
+</script>
+</body>
+</html>

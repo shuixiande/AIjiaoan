@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 教学设计自助生成器</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+    .app { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+    .header { text-align: center; padding: 28px 0 20px; }
+    .header h1 { font-size: 28px; color: #1a73e8; letter-spacing: 1px; }
+    .header p { color: #666; margin-top: 6px; font-size: 14px; }
+
+    .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    .form-row { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+    .form-group { flex: 1; min-width: 180px; }
+    .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%; padding: 8px 12px; border: 1px solid #d0d5dd; border-radius: 6px;
+        font-size: 14px; outline: none; transition: border-color 0.2s; background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+    }
+    .form-group textarea { min-height: 80px; resize: vertical; }
+
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
+    .toggle input { display: none; }
+    .toggle-slider {
+        position: absolute; inset: 0; background: #ccc; border-radius: 22px; transition: 0.25s;
+    }
+    .toggle-slider::before {
+        content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px;
+        background: #fff; border-radius: 50%; transition: 0.25s;
+    }
+    .toggle input:checked + .toggle-slider { background: #1a73e8; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+    .toggle-label { font-size: 14px; }
+    .toggle-label small { color: #999; font-size: 12px; }
+
+    .collapse-header { cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+    .collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .collapse-body.open { max-height: 600px; }
+    .arrow { transition: transform 0.3s; font-size: 12px; color: #999; }
+    .arrow.open { transform: rotate(90deg); }
+
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        padding: 10px 28px; border-radius: 8px; font-size: 15px; font-weight: 600;
+        border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-primary:hover { background: #1557b0; }
+    .btn-primary:disabled { background: #94b8e8; cursor: not-allowed; }
+    .btn-success { background: #0f973d; color: #fff; }
+    .btn-success:hover { background: #0c7e32; }
+    .btn-outline { background: transparent; color: #555; border: 1px solid #d0d5dd; }
+    .btn-outline:hover { background: #f5f5f5; }
+    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+
+    .center { text-align: center; }
+
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .preview-wrap { border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; background: #fff; }
+    .preview-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 14px; background: #f8f9fb; border-bottom: 1px solid #d0d5dd; font-size: 13px; color: #666; flex-wrap: wrap; gap: 8px;
+    }
+    .preview-bar .file-name { font-weight: 500; color: #333; }
+    .preview-frame { width: 100%; min-height: 500px; border: none; }
+
+    /* Toast */
+    .toast {
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        padding: 12px 24px; border-radius: 8px; color: #fff; font-size: 14px; line-height: 1.6;
+        z-index: 9999; opacity: 0; transition: opacity 0.3s, top 0.3s; pointer-events: none; max-width: 90vw;
+    }
+    .toast.show { opacity: 1; top: 30px; }
+    .toast.success { background: #0f973d; }
+    .toast.error { background: #c0392b; }
+
+    /* Modal */
+    .modal-overlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9998;
+        justify-content: center; align-items: center; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+        background: #fff; border-radius: 14px; padding: 32px; max-width: 560px; width: 100%;
+        max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .modal h2 { font-size: 20px; margin-bottom: 6px; color: #1a73e8; }
+    .modal h3 { font-size: 15px; margin: 16px 0 8px; color: #333; }
+    .modal p { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 8px; }
+    .modal ol { padding-left: 20px; font-size: 14px; color: #555; line-height: 1.8; }
+    .modal li { margin-bottom: 4px; }
+    .modal .step-box {
+        background: #f0f6ff; border-left: 3px solid #1a73e8; padding: 10px 14px;
+        border-radius: 0 6px 6px 0; margin: 10px 0; font-size: 13px; color: #333;
+    }
+    .modal .warn-box {
+        background: #fff8e6; border-left: 3px solid #f0ad4e; padding: 10px 14px;
+        border-radius: 0 6px 6px 0; margin: 10px 0; font-size: 13px; color: #664d03;
+    }
+    .modal .btn-close-modal {
+        margin-top: 16px; background: #1a73e8; color: #fff; border: none;
+        padding: 10px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    .modal .btn-close-modal:hover { background: #1557b0; }
+    .modal code {
+        background: #e8ecf1; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: monospace;
+    }
+
+    .tag { display: inline-block; background: #e8f0fe; color: #1a73e8; font-size: 11px; padding: 1px 8px; border-radius: 10px; font-weight: 500; }
+
+    @media (max-width: 600px) {
+        .app { padding: 12px; }
+        .card { padding: 16px; }
+        .form-row { gap: 10px; }
+        .form-group { min-width: 100%; }
+        .header h1 { font-size: 22px; }
+        .btn { width: 100%; }
+        .btn-group { flex-direction: column; }
+        .modal { padding: 20px; }
+    }
+
+    /* scrollbar */
+    .preview-frame::-webkit-scrollbar { width: 6px; }
+    .preview-frame::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Modal 引导弹窗 -->
+<div class="modal-overlay" id="guideModal">
+    <div class="modal">
+        <h2>🚀 欢迎使用 AI 教学设计生成器</h2>
+        <p style="margin-bottom:12px;">本工具通过 AI 自动生成标准教学设计 HTML，支持全学科、各年级。</p>
+
+        <h3>📋 使用前准备</h3>
+        <p>你需要一个 <strong>AI API Key</strong>（调用 AI 的密钥）：</p>
+
+        <div class="step-box">
+            <strong>🔑 获取 API Key（推荐 DeepSeek）</strong><br>
+            1. 打开 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#1a73e8;">platform.deepseek.com</a> 注册登录<br>
+            2. 左侧 → API Keys → 创建 API Key → 复制（以 sk- 开头）<br>
+            3. 新用户免费送约 500 万 tokens，生成几百份教案都用不完
+        </div>
+
+        <div class="warn-box" style="border-left-color:#0f973d;">
+            <strong>✅ 使用步骤：</strong><br><br>
+            <strong>① 双击同目录下的「启动生成器.bat」</strong><br>
+            自动启动本地服务器并打开此页面<br>
+            <strong>② 填入 API Key → 选择模型 → 填写课题</strong><br>
+            <strong>③ 点击「生成教学设计」→ 下载/打印</strong><br><br>
+            <strong>💡 推荐使用 DeepSeek</strong>（免费额度，CORS 支持完善）<br>
+            注册获取 Key：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#1a73e8;">platform.deepseek.com</a>
+        </div>
+
+        <button class="btn-close-modal" onclick="closeGuide()">我已了解，开始使用 →</button>
+    </div>
+</div>
+
+<div class="app">
+
+    <div class="header">
+        <h1>📝 AI 教学设计自助生成器</h1>
+        <p>填写课题信息 → 一键生成标准教学设计 → 下载/打印</p>
+    </div>
+
+    <!-- API 设置 -->
+    <div class="card">
+        <div class="collapse-header" onclick="toggleCollapse(this)">
+            <div class="card-title"><span>⚙️</span> API 设置 <span class="tag">必填</span></div>
+            <span class="arrow" id="apiArrow">▶</span>
+        </div>
+        <div class="collapse-body open" id="apiBody">
+            <div class="form-row">
+                <div class="form-group" style="flex:1.5;">
+                    <label>API 地址</label>
+                    <input type="url" id="apiEndpoint" value="https://api.deepseek.com" placeholder="https://api.deepseek.com">
+                </div>
+                <div class="form-group" style="flex:2;">
+                    <label>API Key <span class="tag">必填</span></label>
+                    <input type="password" id="apiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>模型名称</label>
+                    <input type="text" id="apiModel" value="deepseek-chat" placeholder="deepseek-chat / gpt-4o-mini">
+                </div>
+            </div>
+            <div style="font-size:12px;color:#999;">
+                支持 OpenAI 兼容接口：DeepSeek / 通义千问 / 硅基流动 / Groq 等<br>
+                新手推荐 <a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:#1a73e8;">DeepSeek</a>
+                （注册即送额度，无需绑定手机）
+            </div>
+        </div>
+    </div>
+
+    <!-- 教案信息 -->
+    <div class="card">
+        <div class="card-title"><span>📋</span> 教案信息</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>课程名称 <span class="tag">必填</span></label>
+                <input type="text" id="courseName" placeholder="如：初中化学 / 高中数学 / 小学语文">
+            </div>
+            <div class="form-group">
+                <label>课题名称 <span class="tag">必填</span></label>
+                <input type="text" id="topicName" placeholder="如：制取氧气 / 二次函数的图像与性质">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex:0.8;">
+                <label>课型</label>
+                <select id="lessonType">
+                    <option value="新授课">新授课</option>
+                    <option value="复习课">复习课</option>
+                    <option value="实训课">实训课</option>
+                    <option value="考核课">考核课</option>
+                    <option value="讲评课">讲评课</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0.6;">
+                <label>课时</label>
+                <select id="lessonHours">
+                    <option value="1">1 课时</option>
+                    <option value="2" selected>2 课时</option>
+                    <option value="3">3 课时</option>
+                    <option value="4">4 课时</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>授课班级</label>
+                <input type="text" id="className" placeholder="如：九年级（1）班">
+            </div>
+            <div class="form-group">
+                <label>授课教师</label>
+                <input type="text" id="teacherName" placeholder="可留空">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex:0.6;">
+                <label>授课日期</label>
+                <input type="date" id="teachDate">
+            </div>
+            <div class="form-group" style="flex:1.5;">
+                <label>教学目标维度</label>
+                <select id="objectiveType">
+                    <option value="default">知识与技能 / 过程与方法 / 情感态度与价值观</option>
+                    <option value="core">核心素养（语言建构 / 思维发展 / 审美鉴赏 / 文化传承）</option>
+                    <option value="custom">自定义维度</option>
+                </select>
+            </div>
+            <div class="form-group" id="customDimGroup" style="display:none;flex:1;">
+                <label>自定义维度（每行一个）</label>
+                <textarea id="customDims" placeholder="如：知识理解&#10;能力发展&#10;价值观念"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 可选模块 -->
+    <div class="card">
+        <div class="card-title"><span>🧩</span> 可选模块</div>
+
+        <div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" id="moduleA" checked><span class="toggle-slider"></span></label>
+            <span class="toggle-label">模块 A</span>
+            <input type="text" id="moduleAName" value="课程思政" style="width:120px;padding:4px 8px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;">
+            <small style="color:#999;">（课程思政 / 德育渗透 / 核心素养）</small>
+        </div>
+
+        <div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" id="moduleB" checked><span class="toggle-slider"></span></label>
+            <span class="toggle-label">模块 B</span>
+            <input type="text" id="moduleBName" value="安全教育" style="width:120px;padding:4px 8px;border:1px solid #d0d5dd;border-radius:4px;font-size:13px;">
+            <small style="color:#999;">（安全教育 / 实验规范 / 学科特色）</small>
+        </div>
+
+        <div class="form-row" style="margin-top:10px;">
+            <div class="form-group">
+                <label>额外生成要求（可选）</label>
+                <textarea id="extraReq" placeholder="如：需要融入 AI 技术应用案例 / 侧重培养创新思维 / 包含分组讨论环节 …" style="min-height:50px;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成按钮 -->
+    <div class="card center">
+        <button class="btn btn-primary" id="genBtn" onclick="generate()">
+            <span id="genBtnIcon">✨</span>
+            <span id="genBtnText">生成教学设计</span>
+        </button>
+        <p style="font-size:12px;color:#999;margin-top:8px;">
+            生成约需 30~60 秒 · 首次使用请先双击「启动生成器.bat」
+        </p>
+    </div>
+
+    <!-- 预览与下载 -->
+    <div class="card" id="previewCard" style="display:none;">
+        <div class="card-title"><span>📄</span> 生成结果</div>
+        <div class="preview-wrap">
+            <div class="preview-bar">
+                <span class="file-name" id="fileName">教学设计.html</span>
+                <div class="btn-group" style="margin:0;">
+                    <button class="btn btn-outline" style="padding:6px 16px;font-size:13px;" onclick="copyToClipboard()">📋 复制</button>
+                    <button class="btn btn-success" style="padding:6px 16px;font-size:13px;" onclick="downloadHtml()">💾 下载 HTML</button>
+                    <button class="btn btn-outline" style="padding:6px 16px;font-size:13px;" onclick="printPreview()">🖨️ 打印</button>
+                </div>
+            </div>
+            <iframe class="preview-frame" id="previewFrame" srcdoc=""></iframe>
+        </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0 10px;font-size:12px;color:#999;">
+        基于通用学科教案模板 · 下载后将 .html 改为 .doc 即可用 Word 打开编辑
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ======== 检测协议 ========
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol === 'file:') {
+        // 从 file:// 打开：强制弹出引导，告知用 BAT
+        document.getElementById('guideModal').classList.add('show');
+    } else {
+        // 从 localhost 打开：首次使用也弹引导（仅一次）
+        if (!localStorage.getItem('guideShown')) {
+            setTimeout(() => document.getElementById('guideModal').classList.add('show'), 500);
+            localStorage.setItem('guideShown', '1');
+        }
+    }
+});
+
+function closeGuide() {
+    document.getElementById('guideModal').classList.remove('show');
+}
+
+// ======== 加载/保存设置 ========
+function loadSettings() {
+    const fields = ['apiEndpoint','apiKey','apiModel','courseName','topicName','lessonType','lessonHours',
+                    'className','teacherName','teachDate','objectiveType','moduleAName','moduleBName','extraReq'];
+    fields.forEach(id => {
+        const val = localStorage.getItem(id);
+        if (val) document.getElementById(id).value = val;
+    });
+    ['moduleA','moduleB'].forEach(id => {
+        const val = localStorage.getItem(id);
+        if (val !== null) document.getElementById(id).checked = val === 'true';
+    });
+}
+
+function saveSettings() {
+    const fields = ['apiEndpoint','apiKey','apiModel','courseName','topicName','lessonType','lessonHours',
+                    'className','teacherName','teachDate','objectiveType','moduleAName','moduleBName','extraReq'];
+    fields.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
+    ['moduleA','moduleB'].forEach(id => localStorage.setItem(id, document.getElementById(id).checked));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    if (!document.getElementById('teachDate').value) {
+        const d = new Date(); d.setDate(d.getDate() + 1);
+        document.getElementById('teachDate').value = d.toISOString().slice(0,10);
+    }
+    document.getElementById('objectiveType').addEventListener('change', function() {
+        document.getElementById('customDimGroup').style.display = this.value === 'custom' ? 'block' : 'none';
+    });
+    document.querySelectorAll('#apiKey, #apiEndpoint, #apiModel').forEach(el => {
+        el.addEventListener('input', () => {
+            const key = document.getElementById('apiKey').value.trim();
+            if (key) localStorage.setItem('apiKey', key);
+        });
+    });
+});
+
+// ======== Collapse ========
+function toggleCollapse(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.arrow');
+    body.classList.toggle('open');
+    arrow.classList.toggle('open');
+}
+
+// ======== Toast ========
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.innerHTML = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ======== API 调用 ========
+async function callAI(messages) {
+    let endpoint = document.getElementById('apiEndpoint').value.replace(/\/+$/, '');
+    const key = document.getElementById('apiKey').value.trim();
+    const model = document.getElementById('apiModel').value.trim();
+
+    // 构建完整 API URL
+    let apiUrl = endpoint;
+    if (!apiUrl.endsWith('/v1') && !apiUrl.endsWith('/chat/completions')) {
+        apiUrl += '/chat/completions';
+    } else if (apiUrl.endsWith('/v1')) {
+        apiUrl += '/chat/completions';
+    }
+
+    const body = JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 8192 });
+
+    // 直接调用 API（DeepSeek 等主流 API 均支持 CORS，从 localhost 可直接请求）
+    const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: body
+    });
+    if (!res.ok) {
+        const err = await res.text().catch(() => res.statusText);
+        throw new Error('API 错误 (' + res.status + '): ' + (err || '').slice(0,200));
+    }
+    const data = await res.json();
+    if (!data.choices || !data.choices[0]) throw new Error('API 返回格式异常');
+    return data.choices[0].message.content;
+}
+
+// ======== 构建提示词 ========
+function buildPrompt() {
+    const course = document.getElementById('courseName').value.trim() || '（请填写课程名称）';
+    const topic = document.getElementById('topicName').value.trim() || '（请填写课题名称）';
+    const type = document.getElementById('lessonType').value;
+    const hours = document.getElementById('lessonHours').value;
+    const cls = document.getElementById('className').value.trim() || '（填写班级）';
+    const teacher = document.getElementById('teacherName').value.trim() || '（填写教师）';
+    const date = document.getElementById('teachDate').value || '（填写日期）';
+    const objType = document.getElementById('objectiveType').value;
+    const extra = document.getElementById('extraReq').value.trim();
+    const modAenabled = document.getElementById('moduleA').checked;
+    const modAname = document.getElementById('moduleAName').value.trim();
+    const modBenabled = document.getElementById('moduleB').checked;
+    const modBname = document.getElementById('moduleBName').value.trim();
+
+    let dims = '';
+    if (objType === 'default') {
+        dims = '知识与技能、过程与方法、情感态度与价值观';
+    } else if (objType === 'core') {
+        dims = '语言建构与运用、思维发展与提升、审美鉴赏与创造、文化传承与理解';
+    } else {
+        const custom = document.getElementById('customDims').value.trim();
+        dims = custom || '知识与技能、过程与方法、情感态度与价值观';
+    }
+
+    const extraMods = [];
+    if (modAenabled) extraMods.push(`【可选模块A】名称：${modAname}。请根据学科特点自然融入相关内容，每个要点用 <strong> 标出小标题。`);
+    if (modBenabled) extraMods.push(`【可选模块B】名称：${modBname}。请根据学科特点自然融入相关内容，每个要点用 <strong> 标出小标题。`);
+
+    return `你是一位经验丰富的教学设计专家。请根据以下信息生成一份完整的教学设计方案（HTML格式）。
+
+【课程信息】
+课程名称：${course}
+课题名称：${topic}
+课型：${type}
+课时：${hours}课时（总计约${hours * 45}分钟）
+授课班级：${cls}
+授课教师：${teacher}
+授课日期：${date}
+
+【教学目标维度】
+使用以下维度：${dims}
+请按每个维度列出 2~4 条具体可测量的目标。
+
+${extraMods.join('\n')}
+${extra ? '【额外要求】' + extra : ''}
+
+【HTML生成规范】
+请输出一份完整的 HTML 文档，严格遵循以下结构：
+
+1. 页面 title 为 "${course} - ${topic} 教学设计"，主标题为《${course}》教学设计。
+
+2. 使用 6 列表格（720px 宽），CSS 如下：
+   <style>
+   * { margin:0; padding:0; box-sizing:border-box; }
+   body { font-family:"宋体",SimSun,serif; font-size:12pt; line-height:1.5; }
+   .doc-container { width:720px; margin:0 auto; padding:15px; }
+   .title { text-align:center; font-size:16pt; font-weight:bold; margin-bottom:8px; }
+   table { width:720px; border-collapse:collapse; table-layout:fixed; }
+   td, th { border:1px solid #000; padding:4px 6px; font-size:12pt; vertical-align:top; word-wrap:break-word; }
+   .label-cell { width:90px; font-weight:bold; text-align:center; background-color:#f5f5f5; }
+   .section-title { text-align:center; font-weight:bold; background-color:#f5f5f5; }
+   .input-cell { min-height:35px; }
+   .activity-cell { width:150px; }
+   .teaching-row td { vertical-align:top; padding:6px; }
+   b, strong { font-weight:bold; }
+   </style>
+
+3. 表格行顺序（6列=6个td）：
+   行1: 授课时间(label) | 时间内容(colspan=2) | 课时(label) | 课时内容(colspan=2)
+   行2: 课题名称(label) | 课题内容(colspan=2) | 课型(label) | 课型内容(colspan=2)
+   行3: 授课班级(label) | 班级内容(colspan=2) | 授课教师(label) | 教师内容(colspan=2)
+
+   然后每个内容块由两行组成：
+   - 标题行：section-title（colspan=6，居中加粗灰色背景）
+   - 内容行：label-cell（width=90px） | 内容（colspan=5，class=input-cell）
+
+   按顺序依次输出以下内容块：
+   1. 教学目标（标题行 + 每个维度一行）
+   2. 教学重点（标题行 + 内容行）
+   3. 教学难点（标题行 + 内容行）
+   4. 教法与学法（标题行 + 教法行 + 学法行）
+   ${modAenabled ? "5. " + modAname + "（标题行 + 内容行）" : ""}
+   ${modBenabled ? (modAenabled ? "6. " : "5. ") + modBname + "（标题行 + 内容行）" : ""}
+   7. 教学准备（标题行 + 内容行，分"教师"和"学生"两部分）
+   8. 板书设计（标题行 + 内容行，使用 white-space:pre-line）
+   9. 教学实施（标题行 + 表头行 + 5~7个教学环节行）
+      表头：教学环节 | 教学内容(colspan=2) | 教师活动(activity-cell) | 学生活动(activity-cell) | 设计意图(activity-cell)
+      每个环节行 class="teaching-row"，包含环节名+时间、教学内容、教师活动、学生活动、设计意图
+   10. 课堂小结（标题行 + 内容行）
+   11. 作业设计（标题行 + 内容行，分基础巩固、拓展提高、思考探究三层）
+   12. 教学反思（标题行 + 内容行，含预设问题及预案、亮点设计）
+
+4. 注意事项：
+- 核心概念/公式用 <strong> 加粗
+- 教学实施环节建议：导入→探究新知→深化应用→巩固练习→拓展延伸→课堂小结
+- 每个环节必须有教师活动、学生活动、设计意图
+- 教法至少2种，学法至少2种
+- 时间分配合理（${hours}课时约${hours * 45}分钟）
+- 内容符合该学科该学段的教学实际
+- 板书设计层次清晰，用 ───── 分隔线
+
+请直接输出完整的 HTML 代码，不要包含任何解释或说明。`;
+}
+
+// ======== 生成 ========
+async function generate() {
+    const btn = document.getElementById('genBtn');
+    const icon = document.getElementById('genBtnIcon');
+    const text = document.getElementById('genBtnText');
+
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) {
+        showToast('请先在 API 设置中填写 API Key', 'error');
+        document.getElementById('apiBody').classList.add('open');
+        document.getElementById('apiArrow').classList.add('open');
+        return;
+    }
+    if (!document.getElementById('topicName').value.trim()) {
+        showToast('请填写课题名称', 'error');
+        return;
+    }
+    if (!document.getElementById('courseName').value.trim()) {
+        showToast('请填写课程名称', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spinner"></span>';
+    text.textContent = 'AI 正在备课中（约30~60秒）...';
+    saveSettings();
+
+    try {
+        const prompt = buildPrompt();
+        const html = await callAI([
+            { role: 'system', content: '你是一位资深的学科教学专家和HTML设计师。请严格按照用户要求生成标准教学设计HTML代码，直接输出完整可用代码，不要添加任何解释或额外的标记。' },
+            { role: 'user', content: prompt }
+        ]);
+
+        let cleanHtml = html;
+        const match = html.match(/```html?\s*([\s\S]*?)```/);
+        if (match) cleanHtml = match[1].trim();
+
+        // 补充缺失的 HTML 骨架
+        if (!cleanHtml.includes('<!DOCTYPE')) {
+            cleanHtml = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n' + cleanHtml;
+        }
+        if (!cleanHtml.includes('</html>')) cleanHtml += '\n</html>';
+
+        document.getElementById('previewFrame').srcdoc = cleanHtml;
+        document.getElementById('previewCard').style.display = 'block';
+
+        const fname = (document.getElementById('courseName').value.trim() || '教案')
+                    + '-' + (document.getElementById('topicName').value.trim() || '课题')
+                    + '-教学设计.html';
+        document.getElementById('fileName').textContent = fname;
+
+        showToast('✅ 教学设计生成成功！<br>点击「下载HTML」保存或用Word打开编辑', 'success');
+        document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (e) {
+        let msg = e.message;
+        const isFileProtocol = window.location.protocol === 'file:';
+
+        if (msg.includes('Failed to fetch') || msg.includes('TypeError: fetch')) {
+            if (isFileProtocol) {
+                msg = '⚠️ 不能直接双击打开 HTML 文件！<br>'
+                    + '👉 请先<strong>关闭此页面</strong>，然后双击运行<br>'
+                    + '同目录下的 <strong>「启动生成器.bat」</strong>';
+            } else {
+                msg = '❌ 无法连接到 AI 服务器，可能原因：<br>'
+                    + '① API 地址或 Key 填写有误<br>'
+                    + '② 网络连接不稳定（请检查网络/防火墙）<br>'
+                    + '③ 某些地区可能需要更换 API 地址';
+            }
+            showToast(msg, 'error');
+        } else if (msg.includes('401') || msg.includes('unauthorized')) {
+            showToast('❌ API Key 无效，请检查是否填写正确', 'error');
+        } else if (msg.includes('429')) {
+            showToast('❌ API 调用过于频繁，请稍后重试', 'error');
+        } else if (msg.includes('402')) {
+            showToast('❌ API 余额不足，请充值', 'error');
+        } else {
+            showToast('❌ ' + msg.slice(0, 150), 'error');
+        }
+    } finally {
+        btn.disabled = false;
+        icon.textContent = '✨';
+        text.textContent = '生成教学设计';
+    }
+}
+
+// ======== 下载 ========
+function downloadHtml() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    const name = document.getElementById('fileName').textContent || '教学设计.html';
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✅ 下载成功！可改名 .doc 用 Word 打开', 'success');
+}
+
+function copyToClipboard() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    navigator.clipboard.writeText(html).then(
+        () => showToast('✅ 已复制 HTML 源代码到剪贴板', 'success'),
+        () => {
+            // 兜底
+            const ta = document.createElement('textarea');
+            ta.value = html; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            showToast('✅ 已复制到剪贴板', 'success');
+        }
+    );
+}
+
+function printPreview() {
+    const html = document.getElementById('previewFrame').srcdoc;
+    if (!html) { showToast('请先生成教学设计', 'error'); return; }
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+}
+</script>
+</body>
+</html>
