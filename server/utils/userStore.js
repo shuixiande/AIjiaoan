@@ -1,69 +1,37 @@
-/**
- * 用户管理工具 — 读写用户数据
+﻿/**
+ * 用户管理工具 - 内存存储（适配 Vercel Serverless）
+ * 注意：Serverless 环境下内存数据不会持久化
  */
 
-const fs = require('fs');
-const path = require('path');
+// 内存存储
+const users = new Map();
 
-const DATA_DIR = path.join(__dirname, '../../data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
-// 确保数据目录存在
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-/**
- * 读取所有用户数据
- * @returns {Object}
- */
 function loadUsers() {
-  if (!fs.existsSync(USERS_FILE)) return {};
-  try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-  } catch {
-    return {};
-  }
+  // Vercel 环境不使用文件存储
+  return Object.fromEntries(users);
 }
 
-/**
- * 保存用户数据
- * @param {Object} users
- */
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+function saveUsers() {
+  // Vercel 环境不使用文件存储
 }
 
-/**
- * 获取或创建用户记录
- * @param {string} userId
- * @returns {Object & { userId: string }}
- */
 function getUser(userId) {
-  const users = loadUsers();
-  if (!users[userId]) {
-    users[userId] = {
+  if (!users.has(userId)) {
+    users.set(userId, {
       createdAt: new Date().toISOString(),
       freeUsed: false,
-      paidCount: 0,
+      paidCount: 1,
       totalGenerated: 0
-    };
-    saveUsers(users);
+    });
   }
-  return { ...users[userId], userId };
+  return { ...users.get(userId), userId };
 }
 
-/**
- * 更新用户记录
- * @param {string} userId
- * @param {Object} updates
- * @returns {Object & { userId: string }}
- */
 function updateUser(userId, updates) {
-  const users = loadUsers();
-  users[userId] = { ...(users[userId] || {}), ...updates };
-  saveUsers(users);
-  return { ...users[userId], userId };
+  const current = getUser(userId);
+  const updated = { ...current, ...updates };
+  users.set(userId, updated);
+  return updated;
 }
 
 module.exports = { loadUsers, saveUsers, getUser, updateUser };
