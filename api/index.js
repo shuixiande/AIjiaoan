@@ -8,6 +8,15 @@ import generateHandler from './generate.js';
 import configHandler from './config.js';
 import paymentHandler from './confirm-payment.js';
 
+// 尝试多个可能的路径
+const possiblePaths = [
+  // 从 api/ 目录相对路径
+  process.cwd() + '/public/index.html',
+  __dirname + '/../public/index.html',
+  // 从项目根目录
+  __dirname + '/public/index.html',
+];
+
 export default async function handler(req, res) {
   const url = req.url || '';
 
@@ -25,23 +34,31 @@ export default async function handler(req, res) {
     return paymentHandler(req, res);
   }
 
-  // 根路径 - 返回 public/index.html
+  // 根路径 - 返回 index.html
   if (url === '/' || url === '/index.html') {
     const fs = await import('fs');
-    const path = await import('path');
-    const { fileURLToPath } = await import('url');
 
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const htmlPath = path.join(__dirname, '..', 'public', 'index.html');
+    // 尝试所有可能的路径
+    let html = null;
+    for (const htmlPath of possiblePaths) {
+      try {
+        if (fs.existsSync(htmlPath)) {
+          html = fs.readFileSync(htmlPath, 'utf-8');
+          console.log('Found index.html at:', htmlPath);
+          break;
+        }
+      } catch (e) {
+        console.log('Failed path:', htmlPath, e.message);
+      }
+    }
 
-    try {
-      const html = fs.readFileSync(htmlPath, 'utf-8');
+    if (html) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.send(html);
-    } catch (e) {
-      console.error('Failed to read index.html:', e.message);
-      return res.status(500).send('Internal server error');
     }
+
+    console.error('index.html not found. Checked paths:', possiblePaths);
+    return res.status(500).send('index.html not found');
   }
 
   // 其他路径返回 404
