@@ -7,14 +7,17 @@ import statusHandler from './status.js';
 import generateHandler from './generate.js';
 import configHandler from './config.js';
 import paymentHandler from './confirm-payment.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 尝试多个可能的路径
 const possiblePaths = [
-  // 从 api/ 目录相对路径
-  process.cwd() + '/public/index.html',
-  __dirname + '/../public/index.html',
-  // 从项目根目录
-  __dirname + '/public/index.html',
+  path.join(__dirname, '..', 'public', 'index.html'),
+  path.join(process.cwd(), 'public', 'index.html'),
+  path.join(__dirname, 'public', 'index.html'),
 ];
 
 export default async function handler(req, res) {
