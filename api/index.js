@@ -1,6 +1,6 @@
 /**
- * API 端点 — 处理根路径请求
- * 返回静态 HTML 页面
+ * API 端点 — 主入口
+ * 处理根路径和代理 API 请求
  */
 
 import fs from 'fs';
@@ -9,6 +9,12 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// 导入其他 API 处理器
+import statusHandler from './status.js';
+import generateHandler from './generate.js';
+import configHandler from './config.js';
+import paymentHandler from './confirm-payment.js';
 
 // 查找 index.html 的可能路径
 const possiblePaths = [
@@ -32,7 +38,30 @@ function getIndexHtml() {
 export default async function handler(req, res) {
   const url = req.url || '';
 
-  // 只处理根路径
+  // API 路由
+  if (url === '/api/status' || url.startsWith('/api/status?')) {
+    return statusHandler(req, res);
+  }
+  if (url === '/api/generate' || url.startsWith('/api/generate?')) {
+    return generateHandler(req, res);
+  }
+  if (url === '/api/config' || url.startsWith('/api/config?')) {
+    return configHandler(req, res);
+  }
+  if (url === '/api/confirm-payment' || url.startsWith('/api/confirm-payment')) {
+    return paymentHandler(req, res);
+  }
+  if (url === '/api/health' || url.startsWith('/api/health?')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-User-Id');
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    return res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  }
+
+  // 根路径 - 返回 index.html
   if (url === '/' || url === '/index.html') {
     const html = getIndexHtml();
 
