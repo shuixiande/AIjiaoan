@@ -1,6 +1,6 @@
 /**
  * Vercel 入口函数
- * 处理根路径并代理 API 请求
+ * 处理根路径、静态资源和 API 请求
  */
 
 import statusHandler from './status.js';
@@ -13,12 +13,23 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 尝试多个可能的路径
-const possiblePaths = [
+// 文件路径配置
+const possibleHtmlPaths = [
   path.join(__dirname, '..', 'public', 'index.html'),
   path.join(process.cwd(), 'public', 'index.html'),
   path.join(__dirname, 'public', 'index.html'),
 ];
+
+const possibleImagePaths = [
+  path.join(__dirname, '..', 'public', 'images'),
+  path.join(process.cwd(), 'public', 'images'),
+  path.join(__dirname, 'public', 'images'),
+];
+
+// 静态文件映射
+const staticFiles = {
+  '/images/qrcode.jpg': 'images/qrcode.jpg',
+};
 
 export default async function handler(req, res) {
   const url = req.url || '';
@@ -37,17 +48,45 @@ export default async function handler(req, res) {
     return paymentHandler(req, res);
   }
 
+  // 静态图片资源
+  if (staticFiles[url]) {
+    const fileName = staticFiles[url];
+    const fs = await import('fs');
+
+    for (const imgDir of possibleImagePaths) {
+      const imgPath = path.join(imgDir, fileName);
+      try {
+        if (fs.existsSync(imgPath)) {
+          const ext = path.extname(fileName).toLowerCase();
+          const contentTypes = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+          };
+          const contentType = contentTypes[ext] || 'application/octet-stream';
+
+          res.setHeader('Content-Type', contentType);
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.send(fs.readFileSync(imgPath));
+        }
+      } catch (e) {
+        console.log('Failed to read image:', imgPath, e.message);
+      }
+    }
+    return res.status(404).send('Image not found');
+  }
+
   // 根路径 - 返回 index.html
   if (url === '/' || url === '/index.html') {
     const fs = await import('fs');
 
-    // 尝试所有可能的路径
     let html = null;
-    for (const htmlPath of possiblePaths) {
+    for (const htmlPath of possibleHtmlPaths) {
       try {
         if (fs.existsSync(htmlPath)) {
           html = fs.readFileSync(htmlPath, 'utf-8');
-          console.log('Found index.html at:', htmlPath);
           break;
         }
       } catch (e) {
@@ -60,7 +99,7 @@ export default async function handler(req, res) {
       return res.send(html);
     }
 
-    console.error('index.html not found. Checked paths:', possiblePaths);
+    console.error('index.html not found. Checked paths:', possibleHtmlPaths);
     return res.status(500).send('index.html not found');
   }
 

@@ -1,0 +1,100 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - heading "📝 AI 教学设计自助生成器" [level=1] [ref=e4]
+    - paragraph [ref=e5]: 填写课题信息 → 一键生成标准教学设计 → 下载/打印
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]: 使用方式：
+      - generic [ref=e9]: 系统 API
+      - generic [ref=e10]:
+        - text: 🎁 免费
+        - generic [ref=e11]: "1"
+        - text: 次
+    - button "💰 充值（￥ 2.99 /次）" [ref=e12] [cursor=pointer]:
+      - text: 💰 充值（￥
+      - generic [ref=e13]: "2.99"
+      - text: /次）
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]: 🔑
+      - text: 选择 API 来源
+    - generic [ref=e17]:
+      - generic [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: 🏫 使用系统 API
+        - generic [ref=e20]: 免配置，即开即用
+        - generic [ref=e21]: 🎁 免费 1 次
+      - generic [ref=e22] [cursor=pointer]:
+        - generic [ref=e23]: 🔧 使用自己的 API Key
+        - generic [ref=e24]: DeepSeek / 通义千问 / Groq ···
+        - generic [ref=e25]: ♾️ 不限次数
+  - generic [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e28]: 📋
+      - text: 教案信息
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - text: 课程名称
+          - generic [ref=e32]: 必填
+        - textbox "如：初中化学 / 高中数学 / 小学语文" [ref=e33]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - text: 课题名称
+          - generic [ref=e36]: 必填
+        - textbox "如：制取氧气 / 二次函数的图像与性质" [ref=e37]
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]: 课型
+        - combobox [ref=e41]:
+          - option "新授课" [selected]
+          - option "复习课"
+          - option "实训课"
+          - option "考核课"
+          - option "讲评课"
+      - generic [ref=e42]:
+        - generic [ref=e43]: 课时
+        - combobox [ref=e44]:
+          - option "1 课时"
+          - option "2 课时" [selected]
+          - option "3 课时"
+          - option "4 课时"
+      - generic [ref=e45]:
+        - generic [ref=e46]: 授课班级
+        - textbox "如：九年级（1）班" [ref=e47]
+      - generic [ref=e48]:
+        - generic [ref=e49]: 授课教师
+        - textbox "可留空" [ref=e50]
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: 授课日期
+        - textbox [ref=e54]: 2026-06-15
+      - generic [ref=e55]:
+        - generic [ref=e56]: 教学目标维度
+        - combobox [ref=e57]:
+          - option "知识与技能 / 过程与方法 / 情感态度与价值观" [selected]
+          - option "核心素养（语言建构 / 思维发展 / 审美鉴赏 / 文化传承）"
+          - option "自定义维度"
+  - generic [ref=e58]:
+    - generic [ref=e59]:
+      - generic [ref=e60]: 🧩
+      - text: 可选模块
+    - generic [ref=e61]:
+      - generic [ref=e64]: 模块 A
+      - textbox [ref=e65]: 课程思政
+      - generic [ref=e66]: （课程思政 / 德育渗透 / 核心素养）
+    - generic [ref=e67]:
+      - generic [ref=e70]: 模块 B
+      - textbox [ref=e71]: 安全教育
+      - generic [ref=e72]: （安全教育 / 实验规范 / 学科特色）
+    - generic [ref=e74]:
+      - generic [ref=e75]: 额外生成要求（可选）
+      - textbox "如：需要融入 AI 技术应用案例 / 侧重培养创新思维 / 包含分组讨论环节 …" [ref=e76]
+  - generic [ref=e77]:
+    - button "✨ 生成教学设计" [ref=e78] [cursor=pointer]:
+      - generic [ref=e79]: ✨
+      - generic [ref=e80]: 生成教学设计
+    - paragraph [ref=e81]:
+      - text: 使用系统 API：
+      - strong [ref=e82]: 首次免费
+      - text: ，之后 ￥2.99/次
+  - generic [ref=e83]: 基于通用学科教案模板 · 下载后将 .html 改为 .doc 即可用 Word 打开编辑

@@ -1,5 +1,6 @@
 /**
- * 用户管理工具
+ * 用户管理工具 - Vercel Serverless 优化版
+ * 使用内存缓存 + 文件备份
  */
 
 import fs from 'fs';
@@ -9,7 +10,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = '/tmp/data';
+// Vercel Serverless 环境使用 /tmp 目录
+const DATA_DIR = process.env.VERCEL ? '/tmp/data' : path.join(__dirname, '..', 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 function ensureDataDir() {
@@ -41,13 +43,18 @@ export function saveUsers(users) {
   }
 }
 
+// 进程内缓存 - 用于单次请求内的快速访问
 const memoryCache = new Map();
 
 export function getUser(userId) {
+  // 优先从内存缓存获取
   if (memoryCache.has(userId)) {
-    return { ...memoryCache.get(userId), userId };
+    const cached = memoryCache.get(userId);
+    // 添加时间戳来跟踪缓存时间
+    return { ...cached };
   }
 
+  // 从文件加载
   const users = loadUsers();
   if (!users[userId]) {
     users[userId] = {
@@ -58,15 +65,25 @@ export function getUser(userId) {
     };
     saveUsers(users);
   }
+
   const user = { ...users[userId], userId };
-  memoryCache.set(userId, users[userId]);
+  // 存入内存缓存
+  memoryCache.set(userId, { ...users[userId] });
   return user;
 }
 
 export function updateUser(userId, updates) {
+  // 先从文件加载最新数据
   const users = loadUsers();
+
+  // 合并更新
   users[userId] = { ...(users[userId] || {}), ...updates };
+
+  // 保存到文件（持久化）
   saveUsers(users);
-  memoryCache.set(userId, users[userId]);
+
+  // 更新内存缓存
+  memoryCache.set(userId, { ...users[userId] });
+
   return { ...users[userId], userId };
 }
