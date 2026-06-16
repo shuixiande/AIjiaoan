@@ -28,7 +28,7 @@ const possibleImagePaths = [
 
 // 静态文件映射
 const staticFiles = {
-  '/images/qrcode.jpg': 'images/qrcode.jpg',
+  '/images/qrcode.jpg': 'qrcode.jpg',
 };
 
 export default async function handler(req, res) {
